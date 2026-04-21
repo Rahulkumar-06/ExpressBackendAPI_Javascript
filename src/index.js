@@ -15,6 +15,15 @@ const db = [{id:1 , name : "Rahul" , role : "Server Techniction"},// This is a D
 
 app.use(express.json());            //MidleWere This Execute Json to JavaScript Object in Request.Body
 
+const findIsId = (req,res,next)=>{   // This is my Manual MidleWere For Validation if Not A Number in Params in Request
+    const id = parseInt(req.params.id);
+    if(Number.isNaN(id)){
+           return res.status(400).send("Not a Number");
+        }
+        req.id=id;
+    next();
+}
+
 app.get("/",(req,res)=>{                // Just Greeting method and this is Get method 
         res.send({msg:"Welcome to our Web Server..."});
 });
@@ -33,12 +42,8 @@ app.get("/employees",(req,res)=>{               // This is also Get Method Due t
         res.status(200).json(db);
 });
 
-app.get("/employee/:id",(req,res)=>{         //This is Get Method But Include With Request Params like 
-    const id = parseInt(req.params.id);      //AccessById in To The Duplicate DB 
-    if(Number.isNaN(id)){
-        res.status(400).send("Not A Number");
-        return;
-    }
+app.get("/employee/:id",findIsId,(req,res)=>{         //This is Get Method But Include With Request Params like 
+    const id = req.id;                                //AccessById in To The Duplicate DB 
     const data = db.find((data)=>{
        return data.id === id;
     });
@@ -64,11 +69,10 @@ app.post("/addemp",(req,res)=>{             //This is the Post Method For Create
     res.status(201).json(newemp);             
 
 });
-app.put("/update/:id",(req,res)=>{          //This is Put method like Update Opration Already we have this data in our Db
-        const id = parseInt(req.params.id);   //if we need to change or overWrite in this method
-        if(Number.isNaN(id)){
-           return res.status(400).send("Not a Number");
-        }
+
+
+app.put("/update/:id",findIsId,(req,res)=>{          //This is Put method like Update Opration Already we have this data in our Db
+        const id = req.id;                           //if we need to change or overWrite in this method
         const {name,role} = req.body; 
         const emp = db.find((e)=>{
            return e.id === id;
@@ -82,12 +86,22 @@ app.put("/update/:id",(req,res)=>{          //This is Put method like Update Opr
         res.json(emp);
 
 });
+app.patch("/patch/:id",findIsId,(req,res)=>{
+    const id = req.id;
+    const data = req.body;
+    if(!data){
+        return res.status(404).send("Data is not Send to our Server");
+    }
+    const index = db.findIndex(e=> e.id === id);
+    if(index === -1){
+        return res.status(404).send("Employee is not found");
+    }
+    db[index] = {...db[index],...data};
+    res.status(202).send("Patched");
+});
 
-app.delete("/emp/delete/:id",(req,res)=>{   //Delete Opration
-        const id = parseInt(req.params.id);
-        if(Number.isNaN(id)){
-            return res.status(400).send("Not a Number");
-        }
+app.delete("/emp/delete/:id",findIsId,(req,res)=>{   //Delete Opration
+        const id = req.id;
         const index = db.findIndex(e=>e.id === id);
         if(index === -1){
             return res.status(404).send("Employee is not Found");
