@@ -1,9 +1,11 @@
 import express from "express";
+import {EmployeeValidationScema} from "./utilits/employeeValidation.js";
+import { validationResult, matchedData, checkSchema } from "express-validator";
 
 const app = express();
 
 const PORT = 3000;
-const db = [{id:1 , name : "Rahul" , role : "Server Techniction"},// This is a Duplicate DB For This API Project 
+const db = [{id:1 , name : "Rahul" , role : "Server Techniction"}, // This is a Duplicate DB For This API Project 
             {id:2 , name : "Kumar" , role : "Server Techniction"},
             {id:3 , name : "Kamalesh", role : "Python Developer"},
             {id:4 , name : "Rohith", role : "Ui Ux Designer"},
@@ -54,18 +56,17 @@ app.get("/employee/:id",findIsId,(req,res)=>{         //This is Get Method But I
     }
 
 });
-app.post("/addemp",(req,res)=>{             //This is the Post Method For Create the Employee in to the Duplicate DB and 
-    const {name,role}= req.body;            //Obviously This is Not Saved where we Off the server means it lost the memory.
-      const newemp = {                      //only in runtime is saves. i just try to build the API in Express
+app.post("/addemp",checkSchema(EmployeeValidationScema),(req,res)=>{ 
+    const result = validationResult(req);
+    if(!result.isEmpty()){
+        return res.status(400).send({err:result.array()});
+    }                                        //This is the Post Method For Create the Employee in to the Duplicate DB and 
+    const data = matchedData(req);           //Obviously This is Not Saved where we Off the server means it lost the memory.
+      const newemp = {                       //only in runtime is saves. i just try to build the API in Express
         id: db.length + 1,
-        name,
-        role
+        ...data
     };                 
-    if(name && role){
-    db.push(newemp);
-    }else{
-      return res.status(400).send("Bad Request");
-    } 
+    db.push(newemp); 
     res.status(201).json(newemp);             
 
 });
@@ -112,6 +113,6 @@ app.delete("/emp/delete/:id",findIsId,(req,res)=>{   //Delete Opration
 });
 
 
-app.listen(PORT,()=>{                       //This is a Server Configuration like to set the port number is 3000 
+app.listen(PORT,()=>{                   //This is a Server Configuration like to set the port number is 3000 
     console.log(`The Server is Started in ${PORT}`);
 });
