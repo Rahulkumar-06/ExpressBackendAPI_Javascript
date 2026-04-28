@@ -1,6 +1,7 @@
 import express from "express";
 import {EmployeeValidationScema} from "./utilits/employeeValidation.js";
 import { validationResult, matchedData, checkSchema } from "express-validator";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -15,7 +16,9 @@ const db = [{id:1 , name : "Rahul" , role : "Server Techniction"}, // This is a 
             {id:8 , name : "Suryea", role : "Angular Devloper"}
 ];
 
+
 app.use(express.json());            //MidleWere This Execute Json to JavaScript Object in Request.Body
+app.use(cookieParser());
 
 const findIsId = (req,res,next)=>{   // This is my Manual MidleWere For Validation if Not A Number in Params in Request
     const id = parseInt(req.params.id);
@@ -26,11 +29,15 @@ const findIsId = (req,res,next)=>{   // This is my Manual MidleWere For Validati
     next();
 }
 
-app.get("/",(req,res)=>{                // Just Greeting method and this is Get method 
+app.get("/",(req,res)=>{         // Just Greeting method and this is Get method 
+        res.cookie("role","admin", {maxAge:6000 * 60});
         res.send({msg:"Welcome to our Web Server..."});
 });
 
-app.get("/employees",(req,res)=>{               // This is also Get Method Due to search
+app.get("/employees",(req,res)=>{              // This is also Get Method Due to search
+
+    if(req.cookies.role && req.cookies.role === "admin"){
+
     const {name,value} = req.query;
     if(name && value){
          if (!db[0].hasOwnProperty(name)) {
@@ -42,6 +49,9 @@ app.get("/employees",(req,res)=>{               // This is also Get Method Due t
         return res.status(200).json(result);
     }
         res.status(200).json(db);
+    }else{
+        res.status(401).send("Your not a Admin only Admin access this datam");
+    }
 });
 
 app.get("/employee/:id",findIsId,(req,res)=>{         //This is Get Method But Include With Request Params like 
